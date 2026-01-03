@@ -108,8 +108,8 @@ def read_config() -> Config:
 
 
 def mqtt_connect(cfg: Config) -> mqtt.Client:
-    # Paho MQTT 2.x: Deprecation vermeiden
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+    # Paho MQTT 2.x: Use VERSION2 (current stable)
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
     if cfg.mqtt_user or cfg.mqtt_password:
         client.username_pw_set(cfg.mqtt_user, cfg.mqtt_password)
