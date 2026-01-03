@@ -1,19 +1,19 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-# System deps + Python basics + OCR engine
-# WICHTIG: py3-pytesseract existiert nicht als apk Paket -> via pip installieren
+# Systempakete (apk) – keine pip installs ins System-Python
 RUN apk add --no-cache \
     python3 py3-pip bash jq \
     tesseract-ocr tesseract-ocr-data-eng \
     py3-pillow py3-paho-mqtt \
-    py3-twisted py3-cryptography py3-service_identity \
- && python3 -m pip install --no-cache-dir --upgrade pip
+    py3-twisted py3-cryptography py3-service_identity
 
-# Python libs, die nicht (zuverlässig) als apk verfügbar sind
-RUN python3 -m pip install --no-cache-dir \
-    pytesseract==0.3.10 \
-    vncdotool==1.2.0
+# Virtuelle Umgebung anlegen und dort pip verwenden
+RUN python3 -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel \
+ && /opt/venv/bin/pip install --no-cache-dir \
+      pytesseract==0.3.10 \
+      vncdotool==1.2.0
 
 WORKDIR /opt/app
 COPY app /opt/app/app
