@@ -214,13 +214,19 @@ def capture_region(vnc, region: Tuple[int, int, int, int], persist_path: Optiona
         persist_path.parent.mkdir(parents=True, exist_ok=True)
         path = persist_path
 
+    print(f"[DEBUG] Capturing region: x={x}, y={y}, w={w}, h={h} -> {path}")
     vnc.captureRegion(str(path), x, y, w, h)
+    print(f"[DEBUG] Screenshot saved to: {path} (exists={path.exists()}, size={path.stat().st_size if path.exists() else 0} bytes)")
     return path
 
 
 def ocr_image(path: Path, tesseract_config: str) -> str:
+    print(f"[DEBUG] Running OCR on: {path}")
     with Image.open(path) as img:
-        return pytesseract.image_to_string(img, lang="eng", config=tesseract_config).strip()
+        print(f"[DEBUG] Image size: {img.size}, mode: {img.mode}")
+        result = pytesseract.image_to_string(img, lang="eng", config=tesseract_config).strip()
+        print(f"[DEBUG] OCR raw result length: {len(result)} chars")
+        return result
 
 
 def parse_ocr_value(text: str, pattern: str) -> Optional[str]:
@@ -265,13 +271,19 @@ def main() -> None:
                 print("[INFO] Connecting VNC...")
                 time.sleep(cfg.vnc_connect_delay)
                 vncclient = api.connect(cfg.bwt_ipaddress, password=None, timeout=cfg.vnc_timeout_seconds)
+                print("[INFO] VNC connected successfully.")
                 bwt_login(vncclient, cfg.bwt_password)
+                
+                # Fullscreen-Capture direkt nach Login (Debug)
+                if cfg.debug_screenshots:
+                    print("[DEBUG] Capturing fullscreen after login...")
+                    vncclient.captureScreen(str(DEBUG_DIR / "fullscreen_after_login.png"))
 
             # Durchfluss
             tp_path = capture_region(
                 vncclient,
                 cfg.throughput_region,
-                (DEBUG_DIR / "throughput.png") if cfg.debug_screenshots else None
+                (DEBUG_DIR / f"throughput_{int(time.time())}.png") if cfg.debug_screenshots else None
             )
             tp_raw = ocr_image(tp_path, cfg.tesseract_config)
             tp_str = parse_ocr_value(tp_raw, cfg.throughput_pattern)
@@ -300,7 +312,7 @@ def main() -> None:
             vol_path = capture_region(
                 vncclient,
                 cfg.volume_region,
-                (DEBUG_DIR / "volume.png") if cfg.debug_screenshots else None
+                (DEBUG_DIR / f"volume_{int(time.time())}.png") if cfg.debug_screenshots else None
             )
             vol_raw = ocr_image(vol_path, cfg.tesseract_config)
             vol_str = parse_ocr_value(vol_raw, cfg.volume_pattern)
@@ -337,6 +349,8 @@ def main() -> None:
 
         except Exception as e:
             print(f"[ERROR] Loop exception: {e}")
+            import traceback
+            print(f"[ERROR] Traceback: {traceback.format_exc()}")
             vncclient = None
         finally:
             # temporäre Dateien löschen, falls nicht persistent
