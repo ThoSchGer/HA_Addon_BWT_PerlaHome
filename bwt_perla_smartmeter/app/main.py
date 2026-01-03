@@ -93,9 +93,10 @@ def read_config() -> Config:
 
         # Default-Koordinaten aus deinem ursprünglichen Script
         throughput_region=_parse_region(str(raw.get("throughput_region", "60,70,80,25"))),
-        throughput_pattern=str(raw.get("throughput_pattern", r"(.*)\|*\.?/h")),
+        throughput_pattern=str(raw.get("throughput_pattern", r"(.*)\|*./h")),
         volume_region=_parse_region(str(raw.get("volume_region", "70,150,60,24"))),
-        volume_pattern=str(raw.get("volume_pattern", r"(.*)\|*\.")),
+        volume_pattern=str(raw.get("volume_pattern", r"(.*)\|*.")),
+
 
         # MQTT Discovery
         discovery_prefix=str(raw.get("discovery_prefix", "homeassistant")),
@@ -229,8 +230,8 @@ def parse_ocr_value(text: str, pattern: str) -> Optional[str]:
     result = m.group(1).strip()
     if result in {"O", "o"}:
         result = "0"
-    # Bereinigung: nur Zahlzeichen
-    result = re.sub(r"[^0-9\.,\-]", "", result).replace(",", ".")
+    # Minimale Bereinigung: nur Pipe-Zeichen entfernen, Komma zu Punkt
+    result = result.replace("|", "").replace(",", ".").strip()
     return result if result else None
 
 
