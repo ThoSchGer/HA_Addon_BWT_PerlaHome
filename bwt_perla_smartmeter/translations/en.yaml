@@ -8,6 +8,9 @@ configuration:
   vnc_timeout_seconds:
     name: VNC timeout (seconds)
     description: Timeout for the VNC connection
+  vnc_connect_delay:
+    name: VNC connect delay (seconds)
+    description: Wait time before establishing VNC connection
 
   mqtt_address:
     name: MQTT broker
@@ -48,6 +51,16 @@ configuration:
   volume_pattern:
     name: Regex volume
     description: Regex to extract the volume value
+
+  tesseract_config:
+    name: Tesseract configuration
+    description: Configuration string for the OCR engine
+  discovery_prefix:
+    name: MQTT Discovery prefix
+    description: Prefix for Home Assistant MQTT Discovery topics
+  discovery_node_id:
+    name: MQTT Discovery node ID
+    description: Node ID for the device in Home Assistant
 
   debug_screenshots:
     name: Debug screenshots

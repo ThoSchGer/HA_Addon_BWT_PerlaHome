@@ -15,11 +15,13 @@ Die Auslesung erfolgt durch:
 
 - HA-konformes Add-on (Supervisor verwaltet Lifecycle)
 - Vollständig **konfigurierbar über die Home-Assistant-UI**
+- **MQTT Discovery**: Automatische Sensor-Registrierung in Home Assistant
 - Multi-Arch (Raspberry Pi, x86, etc.)
 - Sauberes Shutdown-Handling (SIGTERM)
 - Robuste OCR-Nachbearbeitung
 - Optional: Debug-Screenshots bei OCR-Fehlern (`/data/debug`)
 - MQTT-Status-Topic (online/offline, retained)
+- Konfigurierbare OCR-Parameter und VNC-Einstellungen
 
 ---
 
@@ -54,8 +56,7 @@ Alle Parameter werden über die Add-on-Konfiguration gesetzt (`/data/options.jso
 |------|--------------|
 | `bwt_ipaddress` | IP-Adresse des BWT Perla |
 | `bwt_password` | Passwort für das BWT UI |
-| `vnc_timeout_seconds` | Timeout für VNC-Verbindung |
-
+| `vnc_timeout_seconds` | Timeout für VNC-Verbindung || `vnc_connect_delay` | Wartezeit vor VNC-Verbindungsaufbau (Sekunden) |
 ### MQTT
 
 | Option | Beschreibung |
@@ -81,8 +82,14 @@ Alle Parameter werden über die Add-on-Konfiguration gesetzt (`/data/options.jso
 | `throughput_region` | OCR-Region Durchfluss (`x,y,w,h`) |
 | `throughput_pattern` | Regex für Durchfluss |
 | `volume_region` | OCR-Region Volumen |
-| `volume_pattern` | Regex für Volumen |
+| `volume_pattern` | Regex für Volumen || `tesseract_config` | Tesseract OCR-Konfiguration |
 
+### MQTT Discovery (optional)
+
+| Option | Beschreibung |
+|------|------------|
+| `discovery_prefix` | MQTT Discovery Prefix (Standard: `homeassistant`) |
+| `discovery_node_id` | Node-ID für das Device (Standard: `bwt_perla`) |
 ### Debug
 
 | Option | Beschreibung |
@@ -141,12 +148,6 @@ Wenn `debug_screenshots=true`:
 - OCR ist abhängig von Display-Helligkeit, Schrift und UI-Layout
 - VNC-Koordinaten sind **geräte- und firmwareabhängig**
 - Kein offizielles BWT-API (reines Reverse-Engineering)
-
----
-
-## 🚀 Roadmap (optional)
-
-- MQTT Discovery (automatische Sensoren in HA)
 
 ---
 
