@@ -27,9 +27,9 @@ options:
   vnc_timeout_seconds: 60
   vnc_connect_delay: 2
   throughput_region: "60,70,80,25"
-  throughput_pattern: "(.*)\|*\.?/h"
+  throughput_pattern: "(.*)\\|*\\.?/h"
   volume_region: "70,150,60,24"
-  volume_pattern: "(.*)\|*\."
+  volume_pattern: "(.*)\\|*\\."
   tesseract_config: '-c page_separator=""'
   discovery_prefix: "homeassistant"
   discovery_node_id: "bwt_perla"
