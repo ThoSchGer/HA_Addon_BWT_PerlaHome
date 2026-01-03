@@ -1,0 +1,54 @@
+configuration:
+  bwt_ipaddress:
+    name: BWT IP-Adresse
+    description: IP-Adresse des BWT Perla (VNC Server)
+  bwt_password:
+    name: BWT Passwort
+    description: Passwort für das BWT UI-Login
+  vnc_timeout_seconds:
+    name: VNC Timeout (Sekunden)
+    description: Timeout für die VNC-Verbindung
+
+  mqtt_address:
+    name: MQTT Broker
+    description: Hostname/IP des MQTT Brokers
+  mqtt_port:
+    name: MQTT Port
+    description: Port des MQTT Brokers
+  mqtt_user:
+    name: MQTT Benutzer
+    description: Benutzername für MQTT
+  mqtt_password:
+    name: MQTT Passwort
+    description: Passwort für MQTT
+
+  mqtt_topic_throughput:
+    name: MQTT Topic Durchfluss
+    description: Topic für Durchflusswerte
+  mqtt_topic_volume:
+    name: MQTT Topic Volumen
+    description: Topic für Volumenwerte
+  mqtt_topic_status:
+    name: MQTT Topic Status
+    description: Topic für Online/Offline (retained)
+
+  interval_seconds:
+    name: Intervall (Sekunden)
+    description: Abfrageintervall
+
+  throughput_region:
+    name: OCR-Region Durchfluss
+    description: Region im Format x,y,w,h
+  throughput_pattern:
+    name: Regex Durchfluss
+    description: Regex zum Extrahieren des Durchflusswerts
+  volume_region:
+    name: OCR-Region Volumen
+    description: Region im Format x,y,w,h
+  volume_pattern:
+    name: Regex Volumen
+    description: Regex zum Extrahieren des Volumenwerts
+
+  debug_screenshots:
+    name: Debug-Screenshots
+    description: Bei OCR-Fehlern Screenshots nach /data/debug schreiben

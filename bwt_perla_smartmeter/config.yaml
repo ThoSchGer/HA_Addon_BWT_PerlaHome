@@ -1,0 +1,69 @@
+name: "BWT Perla Smartmeter (VNC OCR MQTT)"
+slug: "bwt_perla_smartmeter"
+description: "Liest BWT Perla Werte via VNC+OCR und veröffentlicht sie per MQTT."
+version: "0.1.0"
+url: "https://github.com/ThoSchGer/HA_Addon_BWT_PerlaHome"
+
+arch:
+  - aarch64
+  - armv7
+  - amd64
+
+startup: services
+boot: auto
+init: false
+
+# Kein WebUI-Port nötig; Logs reichen. (Wenn du Debug-Screenshots nutzen willst: /data im Add-on ansehen.)
+options:
+  bwt_ipaddress: "192.168.178.50"
+  bwt_password: ""
+  vnc_timeout_seconds: 60
+
+  mqtt_address: "homeassistant.fritz.box"
+  mqtt_port: 1883
+  mqtt_user: ""
+  mqtt_password: ""
+
+  mqtt_topic_throughput: "home/wasser/durchfluss"
+  mqtt_topic_volume: "home/wasser/volumen"
+  mqtt_topic_status: "home/wasser/status"
+
+  interval_seconds: 10
+
+  # OCR-Regeln (Regionen beziehen sich auf dein bestehendes Script)
+  throughput_region: "60,70,80,25"
+  throughput_pattern: "(.*)\\|*\\.?/h"
+  volume_region: "70,150,60,24"
+  volume_pattern: "(.*)\\|*\\."
+
+  # Debug: bei OCR-Fehler Screenshots nach /data/debug schreiben
+  debug_screenshots: true
+
+schema:
+  bwt_ipaddress: str
+  bwt_password: password
+  vnc_timeout_seconds: int(5,)
+
+  mqtt_address: str
+  mqtt_port: port
+  mqtt_user: str
+  mqtt_password: password
+
+  mqtt_topic_throughput: str
+  mqtt_topic_volume: str
+  mqtt_topic_status: str
+
+  interval_seconds: int(1,)
+
+  throughput_region: str
+  throughput_pattern: str
+  volume_region: str
+  volume_pattern: str
+
+  debug_screenshots: bool
+
+map:
+  - data:rw
+
+host_network: false
+privileged: false
