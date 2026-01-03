@@ -12,7 +12,9 @@ RUN apk add --no-cache \
 RUN python3 -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel \
  && /opt/venv/bin/pip install --no-cache-dir \
+      paho-mqtt==2.1.0 \
       pytesseract==0.3.10 \
+      pillow==10.4.0 \
       vncdotool==1.2.0
 
 WORKDIR /opt/app
