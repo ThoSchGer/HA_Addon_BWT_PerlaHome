@@ -39,6 +39,7 @@ class Config:
     bwt_ipaddress: str
     bwt_password: str
     vnc_timeout_seconds: int
+    vnc_connect_delay: int
 
     mqtt_address: str
     mqtt_port: int
@@ -59,6 +60,7 @@ class Config:
     discovery_prefix: str
     discovery_node_id: str
 
+    tesseract_config: str
     debug_screenshots: bool
 
 
@@ -76,6 +78,7 @@ def read_config() -> Config:
         bwt_ipaddress=str(raw["bwt_ipaddress"]),
         bwt_password=str(raw.get("bwt_password", "")),
         vnc_timeout_seconds=int(raw.get("vnc_timeout_seconds", 60)),
+        vnc_connect_delay=int(raw.get("vnc_connect_delay", 2)),
 
         mqtt_address=str(raw["mqtt_address"]),
         mqtt_port=int(raw.get("mqtt_port", 1883)),
@@ -98,6 +101,7 @@ def read_config() -> Config:
         discovery_prefix=str(raw.get("discovery_prefix", "homeassistant")),
         discovery_node_id=str(raw.get("discovery_node_id", "bwt_perla")),
 
+        tesseract_config=str(raw.get("tesseract_config", '-c page_separator=""')),
         debug_screenshots=bool(raw.get("debug_screenshots", True)),
     )
 
@@ -213,9 +217,9 @@ def capture_region(vnc, region: Tuple[int, int, int, int], persist_path: Optiona
     return path
 
 
-def ocr_image(path: Path) -> str:
+def ocr_image(path: Path, tesseract_config: str) -> str:
     with Image.open(path) as img:
-        return pytesseract.image_to_string(img, lang="eng", config='-c page_separator=""').strip()
+        return pytesseract.image_to_string(img, lang="eng", config=tesseract_config).strip()
 
 
 def parse_ocr_value(text: str, pattern: str) -> Optional[str]:
@@ -258,7 +262,7 @@ def main() -> None:
         try:
             if vncclient is None:
                 print("[INFO] Connecting VNC...")
-                time.sleep(2)
+                time.sleep(cfg.vnc_connect_delay)
                 vncclient = api.connect(cfg.bwt_ipaddress, password=None, timeout=cfg.vnc_timeout_seconds)
                 bwt_login(vncclient, cfg.bwt_password)
 
@@ -268,7 +272,7 @@ def main() -> None:
                 cfg.throughput_region,
                 (DEBUG_DIR / "throughput.png") if cfg.debug_screenshots else None
             )
-            tp_raw = ocr_image(tp_path)
+            tp_raw = ocr_image(tp_path, cfg.tesseract_config)
             tp_str = parse_ocr_value(tp_raw, cfg.throughput_pattern)
             print(f"[DEBUG] throughput raw={tp_raw!r} parsed={tp_str!r}")
 
@@ -297,7 +301,7 @@ def main() -> None:
                 cfg.volume_region,
                 (DEBUG_DIR / "volume.png") if cfg.debug_screenshots else None
             )
-            vol_raw = ocr_image(vol_path)
+            vol_raw = ocr_image(vol_path, cfg.tesseract_config)
             vol_str = parse_ocr_value(vol_raw, cfg.volume_pattern)
             print(f"[DEBUG] volume raw={vol_raw!r} parsed={vol_str!r}")
 
