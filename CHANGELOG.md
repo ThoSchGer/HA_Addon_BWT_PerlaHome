@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-03
+
+### Fixed
+- **CRITICAL**: Fixed regex pattern syntax error causing "nothing to repeat at position 5"
+  - Properly escaped pipe characters in patterns: `(.*)\|*./h`
+  - OCR patterns now work correctly
+- Updated MQTT Client API to VERSION2 (removed deprecation warning)
+
+### Added
+- Comprehensive debug logging for troubleshooting
+  - VNC connection status logging
+  - Screenshot capture details (coordinates, file size)
+  - OCR processing information (image size, raw output length)
+  - Full stack traces on errors
+- Screenshots now saved with timestamps for better debugging
+- Fullscreen capture immediately after VNC login
+- DEBUGGING.md with step-by-step troubleshooting guide
+
+### Changed
+- Debug screenshots now always saved when `debug_screenshots: true` (not just on errors)
+- Screenshots include timestamp in filename for history tracking
+
 ## [0.2.0] - 2026-01-03
 
 ### Added
