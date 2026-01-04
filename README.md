@@ -158,6 +158,33 @@ Die Nutzung erfolgt auf eigene Verantwortung.
 
 ---
 
+## 📄 Homeassistant-Config
+
+Füge folgende Sensoren in deine `configuration.yaml` ein, falls du kein MQTT Discovery nutzt:
+
+``` yaml
+mqtt: !include mqtt.yaml
+```
+
+Und in die `mqtt.yaml`:
+
+``` yaml
+sensor:
+  - name: "Wasserdurchfluss"
+    unique_id: home_wasser_durchfluss_1
+    state_topic: "home/wasser/durchfluss"
+    unit_of_measurement: "L/h"
+    value_template: "{{ value }}"
+    state_class: measurement
+  - name: "Wasserverbrauch"
+    unique_id: home_wasser_volumen_1
+    state_topic: "home/wasser/volumen"
+    unit_of_measurement: L
+    value_template: "{{ value }}"
+    state_class: total_increasing
+    device_class: water
+---
+
 ## 👤 Maintainer
 
 **Thomas Schnee**  
