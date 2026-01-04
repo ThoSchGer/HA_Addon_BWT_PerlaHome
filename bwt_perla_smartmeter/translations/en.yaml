@@ -3,8 +3,8 @@ configuration:
     name: BWT IP address
     description: IP address of the BWT Perla (VNC server)
   bwt_password:
-    name: BWT password
-    description: Password for the BWT UI login
+    name: BWT Login code
+    description: Login code for the BWT UIS
   vnc_timeout_seconds:
     name: VNC timeout (seconds)
     description: Timeout for the VNC connection
