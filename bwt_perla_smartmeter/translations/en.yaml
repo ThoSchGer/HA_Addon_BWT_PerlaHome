@@ -3,37 +3,14 @@ configuration:
     name: BWT IP address
     description: IP address of the BWT Perla (VNC server)
   bwt_password:
-    name: BWT Login code
-    description: Login code for the BWT UIS
+    name: BWT password
+    description: Password for the BWT UI login
   vnc_timeout_seconds:
     name: VNC timeout (seconds)
     description: Timeout for the VNC connection
   vnc_connect_delay:
     name: VNC connect delay (seconds)
     description: Wait time before establishing VNC connection
-
-  mqtt_address:
-    name: MQTT broker
-    description: Hostname/IP of the MQTT broker
-  mqtt_port:
-    name: MQTT port
-    description: Port of the MQTT broker
-  mqtt_user:
-    name: MQTT user
-    description: Username for MQTT
-  mqtt_password:
-    name: MQTT password
-    description: Password for MQTT
-
-  mqtt_topic_throughput:
-    name: MQTT topic throughput
-    description: Topic for throughput values
-  mqtt_topic_volume:
-    name: MQTT topic volume
-    description: Topic for volume values
-  mqtt_topic_status:
-    name: MQTT topic status
-    description: Topic for online/offline (retained)
 
   interval_seconds:
     name: Interval (seconds)
@@ -52,15 +29,18 @@ configuration:
     name: Regex volume
     description: Regex to extract the volume value
 
+  entity_prefix:
+    name: Entity prefix
+    description: Prefix for the Home Assistant sensor entities
+  throughput_entity_id:
+    name: Throughput entity ID (optional)
+    description: Fixed entity ID for the throughput sensor (e.g. sensor.wasserdurchfluss). Leave empty to use the default from prefix.
+  volume_entity_id:
+    name: Volume entity ID (optional)
+    description: Fixed entity ID for the volume sensor (e.g. sensor.wasserverbrauch). Leave empty to use the default from prefix.
   tesseract_config:
     name: Tesseract configuration
     description: Configuration string for the OCR engine
-  discovery_prefix:
-    name: MQTT Discovery prefix
-    description: Prefix for Home Assistant MQTT Discovery topics
-  discovery_node_id:
-    name: MQTT Discovery node ID
-    description: Node ID for the device in Home Assistant
 
   debug_screenshots:
     name: Debug screenshots
