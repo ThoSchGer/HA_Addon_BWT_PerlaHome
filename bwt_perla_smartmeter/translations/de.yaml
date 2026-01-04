@@ -3,14 +3,37 @@ configuration:
     name: BWT IP-Adresse
     description: IP-Adresse des BWT Perla (VNC Server)
   bwt_password:
-    name: BWT Passwort
-    description: Passwort für das BWT UI-Login
+    name: BWT Login Code
+    description: Login-Code für das BWT UI
   vnc_timeout_seconds:
     name: VNC Timeout (Sekunden)
     description: Timeout für die VNC-Verbindung
   vnc_connect_delay:
     name: VNC Verbindungsverzögerung (Sekunden)
     description: Wartezeit vor dem VNC-Verbindungsaufbau
+
+  mqtt_address:
+    name: MQTT Broker
+    description: Hostname/IP des MQTT Brokers
+  mqtt_port:
+    name: MQTT Port
+    description: Port des MQTT Brokers
+  mqtt_user:
+    name: MQTT Benutzer
+    description: Benutzername für MQTT
+  mqtt_password:
+    name: MQTT Passwort
+    description: Passwort für MQTT
+
+  mqtt_topic_throughput:
+    name: MQTT Topic Durchfluss
+    description: Topic für Durchflusswerte
+  mqtt_topic_volume:
+    name: MQTT Topic Volumen
+    description: Topic für Volumenwerte
+  mqtt_topic_status:
+    name: MQTT Topic Status
+    description: Topic für Online/Offline (retained)
 
   interval_seconds:
     name: Intervall (Sekunden)
@@ -29,18 +52,15 @@ configuration:
     name: Regex Volumen
     description: Regex zum Extrahieren des Volumenwerts
 
-  entity_prefix:
-    name: Entity-Präfix
-    description: Präfix für die Home Assistant Sensor-Entities
-  throughput_entity_id:
-    name: Entity-ID Durchfluss (optional)
-    description: Feste Entity-ID für den Durchfluss-Sensor (z.B. sensor.wasserdurchfluss). Leer lassen für Standard aus dem Präfix.
-  volume_entity_id:
-    name: Entity-ID Volumen (optional)
-    description: Feste Entity-ID für den Volumen-Sensor (z.B. sensor.wasserverbrauch). Leer lassen für Standard aus dem Präfix.
   tesseract_config:
     name: Tesseract Konfiguration
     description: Konfigurationsstring für die OCR-Engine
+  discovery_prefix:
+    name: MQTT Discovery Prefix
+    description: Prefix für Home Assistant MQTT Discovery Topics
+  discovery_node_id:
+    name: MQTT Discovery Node-ID
+    description: Node-ID für das Device in Home Assistant
 
   debug_screenshots:
     name: Debug-Screenshots

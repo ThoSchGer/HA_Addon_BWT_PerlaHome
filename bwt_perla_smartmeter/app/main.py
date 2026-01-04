@@ -17,7 +17,6 @@ from vncdotool import api
 
 OPTIONS_PATH = Path("/data/options.json")
 DEBUG_DIR = Path("/data/debug")
-SUPERVISOR_TOKEN = os.environ.get("SUPERVISOR_TOKEN", "")
 
 run = True
 vncclient = None
@@ -42,6 +41,15 @@ class Config:
     vnc_timeout_seconds: int
     vnc_connect_delay: int
 
+    mqtt_address: str
+    mqtt_port: int
+    mqtt_user: str
+    mqtt_password: str
+
+    mqtt_topic_throughput: str
+    mqtt_topic_volume: str
+    mqtt_topic_status: str
+
     interval_seconds: int
 
     throughput_region: Tuple[int, int, int, int]
@@ -49,9 +57,9 @@ class Config:
     volume_region: Tuple[int, int, int, int]
     volume_pattern: str
 
-    entity_prefix: str
-    throughput_entity_id: Optional[str]
-    volume_entity_id: Optional[str]
+    discovery_prefix: str
+    discovery_node_id: str
+
     tesseract_config: str
     debug_screenshots: bool
 
@@ -66,150 +74,113 @@ def _parse_region(s: str) -> Tuple[int, int, int, int]:
 def read_config() -> Config:
     raw = json.loads(OPTIONS_PATH.read_text(encoding="utf-8"))
 
-    throughput_entity_id_raw = str(raw.get("throughput_entity_id", "")).strip()
-    volume_entity_id_raw = str(raw.get("volume_entity_id", "")).strip()
-
     return Config(
         bwt_ipaddress=str(raw["bwt_ipaddress"]),
         bwt_password=str(raw.get("bwt_password", "")),
         vnc_timeout_seconds=int(raw.get("vnc_timeout_seconds", 60)),
         vnc_connect_delay=int(raw.get("vnc_connect_delay", 2)),
 
+        mqtt_address=str(raw["mqtt_address"]),
+        mqtt_port=int(raw.get("mqtt_port", 1883)),
+        mqtt_user=str(raw.get("mqtt_user", "")),
+        mqtt_password=str(raw.get("mqtt_password", "")),
+
+        mqtt_topic_throughput=str(raw["mqtt_topic_throughput"]),
+        mqtt_topic_volume=str(raw["mqtt_topic_volume"]),
+        mqtt_topic_status=str(raw["mqtt_topic_status"]),
+
         interval_seconds=int(raw.get("interval_seconds", 10)),
 
+        # Default-Koordinaten aus deinem ursprünglichen Script
         throughput_region=_parse_region(str(raw.get("throughput_region", "60,70,80,25"))),
         throughput_pattern=str(raw.get("throughput_pattern", r"(.*)\|*./h")),
         volume_region=_parse_region(str(raw.get("volume_region", "70,150,60,24"))),
         volume_pattern=str(raw.get("volume_pattern", r"(.*)\|*.")),
 
-        entity_prefix=str(raw.get("entity_prefix", "bwt_perla")),
-        throughput_entity_id=throughput_entity_id_raw or None,
-        volume_entity_id=volume_entity_id_raw or None,
+
+        # MQTT Discovery
+        discovery_prefix=str(raw.get("discovery_prefix", "homeassistant")),
+        discovery_node_id=str(raw.get("discovery_node_id", "bwt_perla")),
+
         tesseract_config=str(raw.get("tesseract_config", '-c page_separator=""')),
         debug_screenshots=bool(raw.get("debug_screenshots", True)),
     )
 
 
-def _normalize_entity_id(value: Optional[str], default: str) -> str:
-    if not value:
-        return default
-    v = value.strip()
-    if not v:
-        return default
-    if "." not in v:
-        return f"sensor.{v}"
-    return v
+def mqtt_connect(cfg: Config) -> mqtt.Client:
+    # Paho MQTT 2.x: Use VERSION2 (current stable)
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+
+    if cfg.mqtt_user or cfg.mqtt_password:
+        client.username_pw_set(cfg.mqtt_user, cfg.mqtt_password)
+
+    client.reconnect_delay_set(min_delay=1, max_delay=120)
+    client.connect(cfg.mqtt_address, cfg.mqtt_port, keepalive=20)
+    client.loop_start()
+    return client
 
 
-def _throughput_entity_id(cfg: Config) -> str:
-    return _normalize_entity_id(cfg.throughput_entity_id, f"sensor.{cfg.entity_prefix}_throughput")
-
-
-def _volume_entity_id(cfg: Config) -> str:
-    return _normalize_entity_id(cfg.volume_entity_id, f"sensor.{cfg.entity_prefix}_volume")
-
-
-mqtt_client: Optional[mqtt.Client] = None
-
-
-def mqtt_on_connect(client, userdata, flags, rc):
-    if rc == 0:
-        print("[INFO] MQTT connected successfully")
-    else:
-        print(f"[WARN] MQTT connection failed with code {rc}")
-
-
-def setup_mqtt() -> mqtt.Client:
-    """Initialize MQTT client for embedded Mosquitto add-on."""
-    client = mqtt.Client()
-    client.on_connect = mqtt_on_connect
-    
-    # Connect to Home Assistant's embedded MQTT broker
+def mqtt_set_status(client: mqtt.Client, cfg: Config, status: str) -> None:
     try:
-        client.connect("core-mosquitto", 1883, 60)
-        client.loop_start()
-        print("[INFO] MQTT client started")
-        return client
+        client.publish(cfg.mqtt_topic_status, payload=status, qos=1, retain=True)
     except Exception as e:
-        print(f"[ERROR] Failed to connect to MQTT: {e}")
-        return client
+        print(f"[WARN] Status publish failed ({status}): {e}")
 
 
-def publish_mqtt_discovery(client: mqtt.Client, entity_id: str, name: str, unit: str, device_class: str, state_class: str, icon: str):
-    """Publish MQTT discovery config for a sensor."""
-    # Extract sensor name from entity_id
-    object_id = entity_id.replace("sensor.", "")
-    
-    discovery_topic = f"homeassistant/sensor/{object_id}/config"
-    state_topic = f"homeassistant/sensor/{object_id}/state"
-    
-    config = {
-        "name": name,
-        "unique_id": entity_id,
-        "state_topic": state_topic,
-        "unit_of_measurement": unit,
-        "device_class": device_class,
-        "state_class": state_class,
-        "icon": icon,
-        "device": {
-            "identifiers": ["bwt_perla_smartmeter"],
-            "name": "BWT Perla",
-            "manufacturer": "BWT",
-            "model": "Perla Smartmeter"
-        }
+def publish_discovery(client: mqtt.Client, cfg: Config) -> None:
+    """
+    MQTT Discovery für Home Assistant:
+    - sensor.bwt_perla_throughput
+    - sensor.bwt_perla_volume
+    """
+    device = {
+        "identifiers": [cfg.discovery_node_id],
+        "manufacturer": "BWT",
+        "model": "Perla",
+        "name": "BWT Perla",
     }
-    
-    client.publish(discovery_topic, json.dumps(config), qos=1, retain=True)
-    print(f"[INFO] Published MQTT discovery for {entity_id}")
 
+    sensors = [
+        {
+            "object_id": "throughput",
+            "name": "BWT Perla Durchfluss",
+            "state_topic": cfg.mqtt_topic_throughput,
+            "unique_id": f"{cfg.discovery_node_id}_throughput",
+            "unit": "l/h",
+            "state_class": "measurement",
+            "device_class": "water",
+            "icon": "mdi:water-pump",
+        },
+        {
+            "object_id": "volume",
+            "name": "BWT Perla Volumen",
+            "state_topic": cfg.mqtt_topic_volume,
+            "unique_id": f"{cfg.discovery_node_id}_volume",
+            "unit": "l",
+            "state_class": "total_increasing",
+            "device_class": "water",
+            "icon": "mdi:water",
+        },
+    ]
 
-def setup_sensors(cfg: Config) -> None:
-    """Initialize MQTT discovery for sensors."""
-    global mqtt_client
-    
-    mqtt_client = setup_mqtt()
-    time.sleep(2)  # Allow MQTT to connect
-    
-    throughput_entity = _throughput_entity_id(cfg)
-    volume_entity = _volume_entity_id(cfg)
-    
-    publish_mqtt_discovery(
-        mqtt_client,
-        throughput_entity,
-        "BWT Perla Durchfluss",
-        "L/h",
-        "water",
-        "measurement",
-        "mdi:water-pump"
-    )
-    
-    publish_mqtt_discovery(
-        mqtt_client,
-        volume_entity,
-        "BWT Perla Volumen",
-        "L",
-        "water",
-        "total_increasing",
-        "mdi:water"
-    )
-    
-    print(f"[INFO] MQTT Discovery configured for {throughput_entity}, {volume_entity}")
+    for s in sensors:
+        topic = f"{cfg.discovery_prefix}/sensor/{cfg.discovery_node_id}/{s['object_id']}/config"
+        payload = {
+            "name": s["name"],
+            "state_topic": s["state_topic"],
+            "availability_topic": cfg.mqtt_topic_status,
+            "payload_available": "online",
+            "payload_not_available": "offline",
+            "unique_id": s["unique_id"],
+            "device": device,
+            "unit_of_measurement": s["unit"],
+            "state_class": s["state_class"],
+            "device_class": s["device_class"],
+            "icon": s["icon"],
+        }
+        client.publish(topic, json.dumps(payload), qos=1, retain=True)
 
-
-def create_or_update_sensor(entity_id: str, state: int, attributes: dict) -> bool:
-    """Update sensor state via MQTT."""
-    if not mqtt_client:
-        return False
-    
-    object_id = entity_id.replace("sensor.", "")
-    state_topic = f"homeassistant/sensor/{object_id}/state"
-    
-    try:
-        mqtt_client.publish(state_topic, str(state), qos=1, retain=False)
-        return True
-    except Exception as e:
-        print(f"[ERROR] MQTT publish failed: {e}")
-        return False
+    print("[INFO] MQTT Discovery published.")
 
 
 def bwt_login(vnc, password: str) -> None:
@@ -282,16 +253,15 @@ def main() -> None:
 
     cfg = read_config()
 
-    setup_sensors(cfg)
+    mqttc = mqtt_connect(cfg)
+    mqtt_set_status(mqttc, cfg, "online")
+    publish_discovery(mqttc, cfg)
 
     if cfg.debug_screenshots:
         DEBUG_DIR.mkdir(parents=True, exist_ok=True)
 
     print("[INFO] Service started.")
     print(f"[INFO] BWT={cfg.bwt_ipaddress}, interval={cfg.interval_seconds}s")
-    print(f"[INFO] Entity prefix={cfg.entity_prefix}")
-    print(f"[INFO] Throughput entity={_throughput_entity_id(cfg)}")
-    print(f"[INFO] Volume entity={_volume_entity_id(cfg)}")
 
     while run:
         tp_path = None
@@ -335,23 +305,8 @@ def main() -> None:
                 continue
 
             if throughput_old is None or tp_val != throughput_old:
-                entity_id = _throughput_entity_id(cfg)
-                success = create_or_update_sensor(
-                    entity_id,
-                    tp_val,
-                    {
-                        "friendly_name": "BWT Perla Durchfluss",
-                        "unit_of_measurement": "l/h",
-                        "device_class": "water",
-                        "state_class": "measurement",
-                        "icon": "mdi:water-pump",
-                    }
-                )
-                if success:
-                    print(f"[INFO] Updated throughput: {tp_val} l/h")
-                    throughput_old = tp_val
-                else:
-                    print("[WARN] Failed to update throughput sensor")
+                mqttc.publish(cfg.mqtt_topic_throughput, payload=tp_val, qos=1, retain=False)
+                throughput_old = tp_val
 
             # Volumen
             vol_path = capture_region(
@@ -385,28 +340,11 @@ def main() -> None:
             # Publish Volume nur bei Änderung + “Jump”-Filter (wie zuvor)
             if volume_old is None or vol_val != volume_old:
                 if volume_old is None:
-                    should_update = True
+                    mqttc.publish(cfg.mqtt_topic_volume, payload=vol_val, qos=1, retain=False)
                 else:
                     diff = vol_val - volume_old
-                    should_update = diff < 50 or vol_val == 0
-                
-                if should_update:
-                    entity_id = _volume_entity_id(cfg)
-                    success = create_or_update_sensor(
-                        entity_id,
-                        vol_val,
-                        {
-                            "friendly_name": "BWT Perla Volumen",
-                            "unit_of_measurement": "l",
-                            "device_class": "water",
-                            "state_class": "total_increasing",
-                            "icon": "mdi:water",
-                        }
-                    )
-                    if success:
-                        print(f"[INFO] Updated volume: {vol_val} l")
-                    else:
-                        print("[WARN] Failed to update volume sensor")
+                    if diff < 50 or vol_val == 0:
+                        mqttc.publish(cfg.mqtt_topic_volume, payload=vol_val, qos=1, retain=False)
                 volume_old = vol_val
 
         except Exception as e:
@@ -427,6 +365,15 @@ def main() -> None:
         time.sleep(cfg.interval_seconds)
 
     print("[INFO] Stopping...")
+    mqtt_set_status(mqttc, cfg, "offline")
+    try:
+        mqttc.loop_stop()
+    except Exception:
+        pass
+    try:
+        mqttc.disconnect()
+    except Exception:
+        pass
     print("[INFO] Stopped.")
 
 
