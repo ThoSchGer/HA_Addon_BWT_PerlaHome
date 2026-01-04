@@ -183,6 +183,8 @@ sensor:
     value_template: "{{ value }}"
     state_class: total_increasing
     device_class: water
+```
+
 ---
 
 ## 👤 Maintainer
