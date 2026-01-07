@@ -1,5 +1,33 @@
 # Debugging Guide für BWT Perla Smartmeter Add-on
 
+## Voraussetzungen
+
+- MQTT Broker läuft (z.B. Mosquitto Add-on)
+- Add-on ist gestartet und connected zu MQTT
+- Check: `mqtt_address` und `mqtt_port` in der Konfiguration korrekt
+
+## Problem: Keine Werte in Home Assistant
+
+### Schritt 1: MQTT Connection prüfen
+
+**Logs überprüfen:**
+```
+[INFO] MQTT connected successfully
+[INFO] MQTT Discovery published.
+```
+
+**MQTT Topics testen:**
+```bash
+mosquitto_sub -h homeassistant.local -t "home/wasser/#" -v
+```
+
+### Schritt 2: Discovery Config prüfen
+
+**Topics sollten existieren:**
+- `homeassistant/sensor/bwt_perla/throughput/config`
+- `homeassistant/sensor/bwt_perla/volume/config`
+- `home/wasser/status` (sollte "online" sein)
+
 ## Problem: OCR liest Bereiche nicht korrekt aus
 
 ### Schritt 1: Debug-Screenshots aktivieren

@@ -1,7 +1,7 @@
 name: "BWT Perla Smartmeter (VNC OCR MQTT)"
 slug: "bwt_perla_smartmeter"
-description: "Liest BWT Perla Werte via VNC+OCR und veröffentlicht sie per MQTT (Discovery)."
-version: "0.3.0"
+description: "Liest BWT Perla Werte via VNC+OCR und veröffentlicht sie per MQTT mit Discovery."
+version: "1.0.0"
 url: "https://github.com/ThoSchGer/HA_Addon_BWT_PerlaHome"
 
 arch:

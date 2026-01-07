@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-01-07
+
+### Added
+
+- Complete manual sensor configuration documentation for Home Assistant
+- Detailed MQTT configuration examples in README
+
+### Changed
+
+- **STABLE RELEASE**: First production-ready version
+- Complete and accurate documentation aligned with implementation
+- All features tested and working: MQTT publishing, MQTT Discovery, OCR, VNC connection
+
+### Fixed
+
+- All documentation now accurately reflects the MQTT-based implementation
+- README includes both MQTT Discovery and manual configuration options
+
+## [0.3.1] - 2026-01-07
+
+### Changed
+- Documentation updated to accurately reflect MQTT-based implementation
+- README.md now correctly describes all MQTT configuration options
+- Improved configuration documentation with detailed option descriptions
+
+### Note
+- This is the current stable implementation using MQTT for sensor communication
+- MQTT Discovery support for automatic sensor registration
+- Configurable MQTT broker, topics, and credentials
+
 ## [0.3.0] - 2026-01-03
 
 ### Fixed
