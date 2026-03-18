@@ -305,7 +305,7 @@ def main() -> None:
                 continue
 
             if throughput_old is None or tp_val != throughput_old:
-                mqttc.publish(cfg.mqtt_topic_throughput, payload=tp_val, qos=1, retain=False)
+                mqttc.publish(cfg.mqtt_topic_throughput, payload=tp_val, qos=1, retain=True)
                 throughput_old = tp_val
 
             # Volumen
@@ -340,11 +340,11 @@ def main() -> None:
             # Publish Volume nur bei Änderung + “Jump”-Filter (wie zuvor)
             if volume_old is None or vol_val != volume_old:
                 if volume_old is None:
-                    mqttc.publish(cfg.mqtt_topic_volume, payload=vol_val, qos=1, retain=False)
+                    mqttc.publish(cfg.mqtt_topic_volume, payload=vol_val, qos=1, retain=True)
                 else:
                     diff = vol_val - volume_old
                     if diff < 50 or vol_val == 0:
-                        mqttc.publish(cfg.mqtt_topic_volume, payload=vol_val, qos=1, retain=False)
+                        mqttc.publish(cfg.mqtt_topic_volume, payload=vol_val, qos=1, retain=True)
                 volume_old = vol_val
 
         except Exception as e:
